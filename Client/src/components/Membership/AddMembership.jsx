@@ -4,7 +4,6 @@ import axios from "axios";
 
 const AddMembership = () => {
     const [formData, setFormData] = useState({
-        name: "",
         email: "",
         duration: "6 months", // Default selected option
     });
@@ -20,8 +19,49 @@ const AddMembership = () => {
         e.preventDefault();
         setError(null);
 
+        const token = localStorage.getItem("token"); // Retrieve token
+        if (!token) {
+            setError("Access denied. No token provided.");
+            return;
+        }
+
         try {
-            await axios.post(`${import.meta.env.VITE_MEMBERSHIP_ADD}`, formData);
+            // Step 1: Fetch userId based on email
+            const userResponse = await axios.get(`${import.meta.env.VITE_USER_FETCH}?email=${formData.email}`, {
+                headers: {
+                    Authorization: `Bearer ${token}`, // Add token in headers
+                },
+            });
+
+            const userId = userResponse.data?.user?._id; // Ensure we have the userId
+            if (!userId) {
+                setError("User not found. Please register the user first.");
+                return;
+            }
+
+            // Step 2: Compute startDate (today) and endDate based on duration
+            const startDate = new Date();
+            let endDate = new Date(startDate);
+            if (formData.duration === "6 months") endDate.setMonth(endDate.getMonth() + 6);
+            else if (formData.duration === "1 year") endDate.setFullYear(endDate.getFullYear() + 1);
+            else if (formData.duration === "2 years") endDate.setFullYear(endDate.getFullYear() + 2);
+
+            // Step 3: Send request with required fields
+            await axios.post(
+                `${import.meta.env.VITE_MEMBERSHIP_ADD}`,
+                {
+                    userId,
+                    type: formData.duration,
+                    startDate,
+                    endDate,
+                },
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+
             navigate("/memberships");
         } catch (err) {
             setError(err.response?.data?.message || "Failed to add membership.");
@@ -33,21 +73,9 @@ const AddMembership = () => {
             <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow-lg w-96">
                 <h2 className="text-2xl font-semibold text-center mb-4">Add Membership</h2>
                 {error && <p className="text-red-500 text-sm mb-2">{error}</p>}
-                
+
                 <div className="mb-4">
-                    <label className="block text-gray-700">Name</label>
-                    <input
-                        type="text"
-                        name="name"
-                        className="w-full px-3 py-2 border rounded"
-                        value={formData.name}
-                        onChange={handleChange}
-                        required
-                    />
-                </div>
-                
-                <div className="mb-4">
-                    <label className="block text-gray-700">Email</label>
+                    <label className="block text-gray-700">User Email</label>
                     <input
                         type="email"
                         name="email"
@@ -81,3 +109,4 @@ const AddMembership = () => {
 };
 
 export default AddMembership;
+

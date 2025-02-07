@@ -39,23 +39,32 @@ router.post("/login", async (req, res) => {
     try {
         const { email, password } = req.body;
 
-        // Check if user exists
         const user = await User.findOne({ email });
-        if (!user) return res.status(400).json({ message: "Invalid credentials" });
+        if (!user) {
+            console.log("User not found");
+            return res.status(400).json({ message: "Invalid credentials" });
+        }
 
-        // Check password
+       
+
         const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) return res.status(400).json({ message: "Invalid credentials" });
+        console.log("Password match:", isMatch);
 
-        // Generate JWT Token
+        if (!isMatch) {
+            return res.status(400).json({ message: "Invalid credentials" });
+        }
+
         const payload = { userId: user._id, role: user.role };
         const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "7d" });
 
+        console.log("Login successful!");
         res.json({ token, user: { id: user._id, name: user.name, email: user.email, role: user.role } });
     } catch (error) {
+        console.log("Error in login:", error);
         res.status(500).json({ message: "Server error" });
     }
 });
+
 
 
 router.post("/logout", authMiddleware, (req, res) => {

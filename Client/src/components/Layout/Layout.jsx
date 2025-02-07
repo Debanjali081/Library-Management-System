@@ -1,7 +1,7 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React from "react";
+import { Link, Outlet } from "react-router-dom";
 
-const Layout = ({ children }) => {
+const Layout = () => {
   return (
     <div className="min-h-screen flex flex-col">
       {/* Navbar */}
@@ -16,7 +16,9 @@ const Layout = ({ children }) => {
       </nav>
 
       {/* Main Content */}
-      <main className="flex-grow">{children}</main>
+      <main className="flex-grow">
+        <Outlet />  {/* Renders the current route */}
+      </main>
 
       {/* Footer */}
       <footer className="bg-gray-800 text-white p-4 text-center">
@@ -27,3 +29,4 @@ const Layout = ({ children }) => {
 };
 
 export default Layout;
+

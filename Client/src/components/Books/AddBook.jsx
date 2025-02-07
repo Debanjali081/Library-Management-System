@@ -7,9 +7,10 @@ const AddBook = () => {
     const [formData, setFormData] = useState({
         title: "",
         author: "",
-        category: "",
+        genre: "", // Renamed from category
         isbn: "",
         publishedYear: "",
+        copiesAvailable: 1, // Added to match backend
     });
 
     const [error, setError] = useState(null);
@@ -22,8 +23,21 @@ const AddBook = () => {
         e.preventDefault();
         setError(null);
 
+        const token = localStorage.getItem("token"); // Retrieve token
+
+        if (!token) {
+            setError("Authentication failed. Please log in again.");
+            return;
+        }
+
         try {
-            await axios.post(import.meta.env.VITE_BOOKS_ADD, formData);
+            await axios.post(
+                import.meta.env.VITE_BOOKS_ADD,
+                formData,
+                {
+                    headers: { Authorization: `Bearer ${token}` }, // Include token in headers
+                }
+            );
             navigate("/admin/dashboard");
         } catch (err) {
             setError(err.response?.data?.message || "Failed to add book");
@@ -50,6 +64,18 @@ const AddBook = () => {
                         onChange={handleChange}
                         required
                     />
+                </div>
+                <div className="mb-4">
+                    <label className="block text-gray-700">Genre</label>
+                    <input
+                        type="text"
+                        name="genre"
+                        className="w-full px-3 py-2 border rounded"
+                        value={formData.genre}
+                        onChange={handleChange}
+                        required
+                    />
+
                 </div>
                 <div className="mb-4">
                     <label className="block text-gray-700">Author</label>
@@ -104,3 +130,4 @@ const AddBook = () => {
 };
 
 export default AddBook;
+
